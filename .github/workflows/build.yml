@@ -23,23 +23,25 @@ jobs:
       - name: Build Projucer
         shell: pwsh
         run: |
-          $projucerSln = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.sln" -Recurse | Select-Object -First 1
+          $projucerSln = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.sln*" -Recurse | Select-Object -First 1
           msbuild $projucerSln.FullName /p:Configuration=Release /p:Platform=x64
 
       - name: Resave .jucer project
         shell: pwsh
         run: |
+          (Get-Content MyPlugin.jucer) -replace 'path="[^"]*modules"', 'path="JUCE/modules"' | Set-Content MyPlugin.jucer
           $projucerExe = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.exe" -Recurse | Select-Object -First 1
           & $projucerExe.FullName --resave MyPlugin.jucer
-          Get-ChildItem -Path "Builds" -Recurse
 
       - name: Build VST3 Plugin
         shell: pwsh
         run: |
-          $pluginSln = Get-ChildItem -Path "Builds" -Filter "*.sln" -Recurse | Select-Object -First 1
-          if (-not $pluginSln) { throw "No .sln file found in Builds!" }
-          Write-Host "Building: $($pluginSln.FullName)"
-          msbuild $pluginSln.FullName /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+          $vstProj = Get-ChildItem -Path "Builds" -Filter "*VST3.vcxproj" -Recurse | Select-Object -First 1
+          if (-not $vstProj) {
+            Get-ChildItem -Path "Builds" -Recurse | Select-Object FullName
+            throw "VST3 project not found!"
+          }
+          msbuild $vstProj.FullName /p:Configuration=Release /p:Platform=x64
 
       - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
