@@ -36,11 +36,11 @@ jobs:
       - name: Build VST3 Plugin
         shell: pwsh
         run: |
-          $vstProj = Get-ChildItem -Path "Builds" -Filter "*VST3.vcxproj" -Recurse | Select-Object -First 1
-          if (-not $vstProj) {
-            Get-ChildItem -Path "Builds" -Recurse | Select-Object FullName
-            throw "VST3 project not found!"
+          $sharedProj = Get-ChildItem -Path "Builds" -Filter "*SharedCode.vcxproj" -Recurse | Select-Object -First 1
+          if ($sharedProj) {
+            msbuild $sharedProj.FullName /p:Configuration=Release /p:Platform=x64
           }
+          $vstProj = Get-ChildItem -Path "Builds" -Filter "*VST3.vcxproj" -Recurse | Select-Object -First 1
           msbuild $vstProj.FullName /p:Configuration=Release /p:Platform=x64
 
       - name: Upload VST3 artifact
