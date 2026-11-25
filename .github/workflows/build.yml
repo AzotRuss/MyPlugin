@@ -75,3 +75,47 @@ jobs:
         with:
           name: NikeAirForce1-Installer
           path: Installer\NikeAirForce1_Installer.exe
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download JUCE
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          ref: master
+          path: JUCE
+
+      - name: Build Projucer
+        run: |
+          xcodebuild -project JUCE/extras/Projucer/Builds/MacOSX/Projucer.xcodeproj -configuration Release
+
+      - name: Resave .jucer project
+        run: |
+          sed -i '' 's|path="[^"]*modules"|path="JUCE/modules"|g' MyPlugin.jucer
+          ./JUCE/extras/Projucer/Builds/MacOSX/build/Release/Projucer.app/Contents/MacOS/Projucer --resave MyPlugin.jucer
+
+      - name: Build Plugin (Universal Intel + Apple Silicon)
+        run: |
+          xcodebuild -project Builds/MacOSX/MyPlugin.xcodeproj -configuration Release -alltargets ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Package macOS Installer (.pkg)
+        run: |
+          mkdir -p pkg_root/Library/Audio/Plug-Ins/VST3
+          mkdir -p pkg_root/Library/Audio/Plug-Ins/Components
+          mkdir -p Installer
+
+          find Builds/MacOSX/build/Release -name "*.vst3" -exec cp -R {} pkg_root/Library/Audio/Plug-Ins/VST3/ \;
+          find Builds/MacOSX/build/Release -name "*.component" -exec cp -R {} pkg_root/Library/Audio/Plug-Ins/Components/ \;
+
+          pkgbuild --root pkg_root --identifier com.azotruss.nikeairforce1 --version 1.0 Installer/NikeAirForce1_macOS_Installer.pkg
+
+      - name: Upload macOS Installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NikeAirForce1-macOS-Installer
+          path: Installer/NikeAirForce1_macOS_Installer.pkg
