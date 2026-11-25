@@ -14,19 +14,22 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Download JUCE
-        run: |
-          git clone --depth 1 --branch master https://github.com C:\JUCE
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          ref: master
+          path: JUCE
 
       - name: Build Projucer
         shell: pwsh
         run: |
-          $projucerSln = Get-ChildItem -Path "C:\JUCE\extras\Projucer\Builds" -Filter "Projucer.sln" -Recurse | Select-Object -First 1
+          $projucerSln = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.sln" -Recurse | Select-Object -First 1
           msbuild $projucerSln.FullName /p:Configuration=Release /p:Platform=x64
 
       - name: Resave .jucer project
         shell: pwsh
         run: |
-          $projucerExe = Get-ChildItem -Path "C:\JUCE\extras\Projucer\Builds" -Filter "Projucer.exe" -Recurse | Select-Object -First 1
+          $projucerExe = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.exe" -Recurse | Select-Object -First 1
           & $projucerExe.FullName --resave MyPlugin.jucer
 
       - name: Build VST3 Plugin
