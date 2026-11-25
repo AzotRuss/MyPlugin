@@ -2,9 +2,6 @@ name: Build VST3 Plugin
 
 on: [push, workflow_dispatch]
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: windows-latest
@@ -50,10 +47,31 @@ jobs:
           $bundleDir = "Output\MyPlugin.vst3\Contents\x86_64-win"
           New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
           Copy-Item $dll.FullName (Join-Path $bundleDir "MyPlugin.vst3") -Force
-          Compress-Archive -Path "Output\MyPlugin.vst3" -DestinationPath "MyPlugin-VST3.zip" -Force
 
-      - name: Upload VST3 artifact
+      - name: Build EXE Installer
+        shell: pwsh
+        run: |
+          $iss = @"
+          [Setup]
+          AppName=nike air force 1 low premium clot white silk
+          AppVersion=1.0
+          DefaultDirName={commoncf}\VST3
+          DisableDirPage=yes
+          DisableProgramGroupPage=yes
+          OutputDir=Installer
+          OutputBaseFilename=NikeAirForce1_Installer
+          Compression=lzma2
+          SolidCompression=yes
+          PrivilegesRequired=admin
+
+          [Files]
+          Source: "Output\MyPlugin.vst3\*"; DestDir: "{app}\MyPlugin.vst3"; Flags: ignoreversion recursesubdirs createallsubdirs
+          "@
+          Set-Content -Path "setup.iss" -Value $iss
+          iscc "setup.iss"
+
+      - name: Upload Installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyPlugin-VST3
-          path: MyPlugin-VST3.zip
+          name: NikeAirForce1-Installer
+          path: Installer\NikeAirForce1_Installer.exe
