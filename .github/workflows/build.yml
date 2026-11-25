@@ -1,0 +1,42 @@
+name: Build VST3 Plugin
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download JUCE
+        run: |
+          git clone --depth 1 --branch master https://github.com C:\JUCE
+
+      - name: Build Projucer
+        shell: pwsh
+        run: |
+          $projucerSln = Get-ChildItem -Path "C:\JUCE\extras\Projucer\Builds" -Filter "Projucer.sln" -Recurse | Select-Object -First 1
+          msbuild $projucerSln.FullName /p:Configuration=Release /p:Platform=x64
+
+      - name: Resave .jucer project
+        shell: pwsh
+        run: |
+          $projucerExe = Get-ChildItem -Path "C:\JUCE\extras\Projucer\Builds" -Filter "Projucer.exe" -Recurse | Select-Object -First 1
+          & $projucerExe.FullName --resave MyPlugin.jucer
+
+      - name: Build VST3 Plugin
+        shell: pwsh
+        run: |
+          $pluginSln = Get-ChildItem -Path "Builds" -Filter "MyPlugin.sln" -Recurse | Select-Object -First 1
+          msbuild $pluginSln.FullName /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+
+      - name: Upload VST3 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyPlugin-VST3
+          path: Builds\**\VST3\
