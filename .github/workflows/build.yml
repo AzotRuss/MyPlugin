@@ -2,6 +2,9 @@ name: Build VST3 Plugin
 
 on: [push, workflow_dispatch]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -40,15 +43,17 @@ jobs:
           if ($sharedProj) {
             msbuild $sharedProj.FullName /p:Configuration=Release /p:Platform=x64
           }
-          $helperProj = Get-ChildItem -Path "Builds" -Filter "*VST3 Manifest Helper.vcxproj" -Recurse | Select-Object -First 1
-          if ($helperProj) {
-            msbuild $helperProj.FullName /p:Configuration=Release /p:Platform=Win32
-          }
           $vstProj = Get-ChildItem -Path "Builds" -Filter "*VST3.vcxproj" -Recurse | Select-Object -First 1
-          msbuild $vstProj.FullName /p:Configuration=Release /p:Platform=x64
+          msbuild $vstProj.FullName /p:Configuration=Release /p:Platform=x64 /p:PostBuildEventUseInBuild=false
+
+          $dll = Get-ChildItem -Path "Builds" -Filter "*.dll" -Recurse | Where-Object { $_.FullName -like "*VST3*" } | Select-Object -First 1
+          $bundleDir = "Output\MyPlugin.vst3\Contents\x86_64-win"
+          New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
+          Copy-Item $dll.FullName (Join-Path $bundleDir "MyPlugin.vst3") -Force
+          Compress-Archive -Path "Output\MyPlugin.vst3" -DestinationPath "MyPlugin-VST3.zip" -Force
 
       - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
         with:
           name: MyPlugin-VST3
-          path: Builds\**\VST3\
+          path: MyPlugin-VST3.zip
