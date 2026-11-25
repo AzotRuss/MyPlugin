@@ -40,6 +40,10 @@ jobs:
           if ($sharedProj) {
             msbuild $sharedProj.FullName /p:Configuration=Release /p:Platform=x64
           }
+          $helperProj = Get-ChildItem -Path "Builds" -Filter "*VST3 Manifest Helper.vcxproj" -Recurse | Select-Object -First 1
+          if ($helperProj) {
+            msbuild $helperProj.FullName /p:Configuration=Release /p:Platform=Win32
+          }
           $vstProj = Get-ChildItem -Path "Builds" -Filter "*VST3.vcxproj" -Recurse | Select-Object -First 1
           msbuild $vstProj.FullName /p:Configuration=Release /p:Platform=x64
 
