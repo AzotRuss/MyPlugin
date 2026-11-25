@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="FWHNx1" name="MyPlugin" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="FWHNx1" name="MyPlugin" pluginName="nike air force 1 low premium clot white silk"
+              projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="V56YaG" name="MyPlugin">
     <GROUP id="{B9257F7C-B104-6804-C2DA-A1EDE35F2A31}" name="Source">
