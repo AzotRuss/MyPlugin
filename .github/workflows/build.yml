@@ -31,11 +31,14 @@ jobs:
         run: |
           $projucerExe = Get-ChildItem -Path "JUCE\extras\Projucer\Builds" -Filter "Projucer.exe" -Recurse | Select-Object -First 1
           & $projucerExe.FullName --resave MyPlugin.jucer
+          Get-ChildItem -Path "Builds" -Recurse
 
       - name: Build VST3 Plugin
         shell: pwsh
         run: |
-          $pluginSln = Get-ChildItem -Path "Builds" -Filter "MyPlugin.sln" -Recurse | Select-Object -First 1
+          $pluginSln = Get-ChildItem -Path "Builds" -Filter "*.sln" -Recurse | Select-Object -First 1
+          if (-not $pluginSln) { throw "No .sln file found in Builds!" }
+          Write-Host "Building: $($pluginSln.FullName)"
           msbuild $pluginSln.FullName /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
 
       - name: Upload VST3 artifact
